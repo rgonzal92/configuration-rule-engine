@@ -1,0 +1,10 @@
+.private/
+.env
+.env.*
+!.env.example
+target/
+node_modules/
+frontend/dist/
+frontend/.angular/
+.vitest/
+*.log
