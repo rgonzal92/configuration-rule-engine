@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
  * revealed.
  */
 @Component
-class CatalogAccess {
+public class CatalogAccess {
   /** A catalog the visitor may use, with its workspace. */
   public record Allowed(CatalogRow catalog, Workspace workspace) {}
 

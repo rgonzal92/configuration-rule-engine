@@ -39,12 +39,16 @@ abstract class ApplicationIT {
   @Autowired MutableClock clock;
   @Autowired JdbcClient jdbc;
 
-  /** Every test starts at the same instant with no guests or sessions. */
+  /**
+   * Every test starts at the same instant with no guests, sessions, or assistant attempts. All
+   * classes share one database, so leftovers would make results depend on the order they run in.
+   */
   @BeforeEach
   void resetGuests() {
     clock.set(START);
     jdbc.sql("DELETE FROM spring_session").update();
     jdbc.sql("DELETE FROM workspace WHERE kind = 'GUEST'").update();
+    jdbc.sql("DELETE FROM suggestion_attempt").update();
   }
 
   GuestClient visitor() {

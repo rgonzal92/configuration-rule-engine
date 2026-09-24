@@ -46,7 +46,7 @@ class PackagedApplicationIT {
       try {
         waitUntilReady(client, base, process);
 
-        assertEquals("3", query(database, "select max(version::int) from flyway_schema_history"));
+        assertEquals("4", query(database, "select max(version::int) from flyway_schema_history"));
         checkApiAndAssetErrors(client, base);
 
         var guest = new GuestClient(base);
