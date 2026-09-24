@@ -1,0 +1,167 @@
+@let current = catalog();
+<p class="status" role="status">
+  {{ status() }} @if (details().length > 0) {
+  <span class="details">{{ details().join(' ') }}</span>
+  }
+</p>
+
+@if (current) {
+<article class="catalog" aria-labelledby="catalog-heading">
+  <h3 id="catalog-heading">{{ current.name }} catalog</h3>
+  <p>
+    {{ current.features.length }} optional features. Changes stay pending until you check and apply
+    them together.
+  </p>
+
+  <h4>Active relationships</h4>
+  <app-relationship-list
+    [catalog]="current"
+    [editable]="true"
+    [pendingGroupIds]="pendingGroupIds()"
+    [disabled]="busy()"
+    (edit)="startEditActive($event)"
+    (remove)="removeGroup($event)"
+  />
+
+  <form class="panel" (submit)="$event.preventDefault(); submitForm()">
+    @let editing = mode().type !== 'new';
+    <h4>{{ editing ? 'Edit relationship' : 'Stage a relationship' }}</h4>
+
+    <!-- Controls stay locked while a request runs, so a save can't discard new edits. -->
+    <fieldset class="plain" [disabled]="busy()">
+      <label class="field">
+        Source feature
+        <select #sourceSelect (change)="chooseSource($any($event.target).value)">
+          <option value="">Choose a feature</option>
+          @for (feature of current.features; track feature.id) {
+          <option [value]="feature.id" [selected]="feature.id === source()">
+            {{ feature.name }}
+          </option>
+          }
+        </select>
+      </label>
+
+      <label class="field">
+        Relationship type
+        <select (change)="kind.set($any($event.target).value)">
+          @for (option of kinds; track option) {
+          <option [value]="option" [selected]="option === kind()">{{ kindLabels[option] }}</option>
+          }
+        </select>
+      </label>
+      <p class="help">{{ kindHelp[kind()] }}</p>
+
+      <fieldset>
+        <legend>Target features (up to {{ maxTargets }})</legend>
+        @for (feature of targetChoices(); track feature.id) { @let chosen =
+        targets().includes(feature.id);
+        <label class="choice">
+          <input
+            type="checkbox"
+            [checked]="chosen"
+            [disabled]="!chosen && targets().length >= maxTargets"
+            (change)="toggleTarget(feature.id)"
+          />
+          {{ feature.name }}
+        </label>
+        }
+      </fieldset>
+    </fieldset>
+
+    <button type="submit" [disabled]="busy()">
+      {{ editing ? 'Save change' : 'Stage change' }}
+    </button>
+    @if (editing) {
+    <button type="button" (click)="resetForm()">Cancel</button>
+    }
+  </form>
+
+  <section class="panel" aria-labelledby="pending-heading">
+    <h4 id="pending-heading" tabindex="-1" #pendingHeading>Pending changes</h4>
+    @if (operations().length === 0) {
+    <p>No pending changes.</p>
+    } @else {
+    <ol class="rules">
+      @for (operation of operations(); track $index) { @let sentence = describe(operation);
+      <li>
+        <span>{{ sentence }}</span>
+        <span class="actions">
+          @if (operation.type === 'CREATE') {
+          <button
+            type="button"
+            [attr.aria-label]="'Edit pending: ' + sentence"
+            [disabled]="busy()"
+            (click)="startEditPending($index)"
+          >
+            Edit
+          </button>
+          }
+          <button
+            type="button"
+            [attr.aria-label]="'Undo: ' + sentence"
+            [disabled]="busy()"
+            (click)="undoChange($index)"
+          >
+            Undo
+          </button>
+        </span>
+      </li>
+      }
+    </ol>
+    }
+
+    <button type="button" [disabled]="busy() || operations().length === 0" (click)="check()">
+      Check pending changes
+    </button>
+    <button type="button" [disabled]="busy() || !canApply()" (click)="apply()">
+      Apply changes
+    </button>
+  </section>
+
+  @let checked = checkView(); @if (checked) {
+  <section class="panel" aria-labelledby="check-heading">
+    <h4 id="check-heading">Check result</h4>
+    @if (checked.result.valid) {
+    <p>These changes can be applied.</p>
+    } @else {
+    <p>These changes can't be applied:</p>
+    <ul>
+      @for (reason of checked.result.blocking; track $index) {
+      <li>{{ reason.message }}</li>
+      }
+    </ul>
+    }
+
+    <p>
+      Valid configurations: {{ formatCount(checked.result.validBefore) }} → {{
+      formatCount(checked.result.validAfter) }}
+    </p>
+
+    @if (checked.result.added.length > 0) {
+    <h5>Relationships added</h5>
+    <ul>
+      @for (change of checked.result.added; track $index) {
+      <li>{{ change.description }}</li>
+      }
+    </ul>
+    } @if (checked.result.removed.length > 0) {
+    <h5>Relationships removed</h5>
+    <ul>
+      @for (change of checked.result.removed; track $index) {
+      <li>{{ change.description }}</li>
+      }
+    </ul>
+    } @if (checked.result.indirect.length > 0) {
+    <h5>New indirect requirements</h5>
+    <ul>
+      @for (item of checked.result.indirect; track $index) {
+      <li>{{ item.description }}</li>
+      }
+    </ul>
+    }
+  </section>
+  }
+
+  <app-configuration-tester [catalog]="current" />
+</article>
+}

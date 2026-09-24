@@ -1,10 +1,11 @@
 import { DatePipe } from '@angular/common';
 import { Component, ElementRef, OnInit, inject, viewChild } from '@angular/core';
+import { CatalogEditor } from './catalog-editor';
 import { SessionService } from '../../core/session.service';
 
 /** Starts or resumes the visitor's private guest workspace. */
 @Component({
-  imports: [DatePipe],
+  imports: [CatalogEditor, DatePipe],
   selector: 'app-workspace-page',
   template: `
     <section aria-labelledby="workspace-heading">
@@ -38,6 +39,8 @@ import { SessionService } from '../../core/session.service';
         <button type="button" (click)="start()">Start guest workspace</button>
       } @else if (state.kind === 'expired') {
         <button type="button" (click)="start()">Start a new guest workspace</button>
+      } @else if (state.kind === 'guest') {
+        <app-catalog-editor />
       }
     </section>
   `,

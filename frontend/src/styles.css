@@ -8,3 +8,103 @@
 body {
   margin: 0;
 }
+
+/* Shared catalog layout. Kept global so each component stays within its style budget. */
+.catalog {
+  margin: 2rem 0;
+}
+
+.panel {
+  background: white;
+  border: 1px solid #c9dbe1;
+  border-radius: 0.5rem;
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem;
+}
+
+.panel h4,
+.panel h3 {
+  margin-top: 0;
+}
+
+fieldset {
+  border: 1px solid #c9dbe1;
+  border-radius: 0.5rem;
+  display: grid;
+  gap: 0.35rem;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  margin: 0.75rem 0;
+}
+
+.plain {
+  border: 0;
+  display: block;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+
+legend {
+  font-weight: 600;
+  padding: 0 0.25rem;
+}
+
+.field {
+  display: grid;
+  font-weight: 600;
+  gap: 0.25rem;
+  margin: 0.75rem 0;
+}
+
+.field select {
+  font: inherit;
+  max-width: 100%;
+  padding: 0.4rem;
+}
+
+.choice {
+  align-items: center;
+  display: flex;
+  gap: 0.4rem;
+}
+
+.help {
+  color: #3d5a64;
+  margin: 0;
+}
+
+.rules {
+  display: grid;
+  gap: 0.5rem;
+  padding-left: 1.25rem;
+}
+
+.rules li {
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-left: 0.5rem;
+}
+
+.tag {
+  background: #fff4d6;
+  border-radius: 0.25rem;
+  font-size: 0.85rem;
+  margin-left: 0.5rem;
+  padding: 0 0.35rem;
+}
+
+.details {
+  display: block;
+}
+
+button {
+  font: inherit;
+  margin: 0.25rem 0.5rem 0.25rem 0;
+  min-height: 2.5rem;
+  padding: 0.4rem 0.9rem;
+}

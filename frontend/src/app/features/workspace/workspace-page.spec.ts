@@ -43,6 +43,7 @@ describe('WorkspacePage', () => {
     expect(fixture.nativeElement.textContent).toContain(
       'Your private workspace is available until',
     );
+    http.expectOne('/api/catalogs').flush([]);
   });
 
   it('explains an expired workspace and offers a new one', async () => {
@@ -80,5 +81,6 @@ describe('WorkspacePage', () => {
     const status = fixture.nativeElement.querySelector('[role="status"]') as HTMLElement;
     expect(document.activeElement).toBe(status);
     expect(status.textContent).toContain('Your private workspace is available until');
+    http.expectOne('/api/catalogs').flush([]);
   });
 });
