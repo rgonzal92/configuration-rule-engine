@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, ElementRef, OnInit, inject, viewChild } from '@angular/core';
-import { SessionService } from './session.service';
+import { SessionService } from '../../core/session.service';
 
 /** Starts or resumes the visitor's private guest workspace. */
 @Component({
