@@ -1,7 +1,5 @@
-package dev.rgonz.cre.web;
+package dev.rgonz.cre.workspace;
 
-import dev.rgonz.cre.domain.WorkspaceAccess;
-import dev.rgonz.cre.persistence.WorkspaceRepository;
 import java.time.Clock;
 import java.util.UUID;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** Serves the shared public examples to anyone, without a session. */
 @RestController
-public class ShowcaseController {
+class ShowcaseController {
   private final WorkspaceRepository workspaces;
   private final Clock clock;
 

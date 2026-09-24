@@ -1,6 +1,7 @@
-package dev.rgonz.cre.web;
+package dev.rgonz.cre.core;
 
-import dev.rgonz.cre.persistence.WorkspaceRepository;
+import dev.rgonz.cre.workspace.WorkspaceExpiryFilter;
+import dev.rgonz.cre.workspace.WorkspaceRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -25,7 +26,7 @@ import tools.jackson.databind.json.JsonMapper;
  * each read endpoint applies workspace access rules itself. Other API writes need a live guest.
  */
 @Configuration
-public class SecurityConfig {
+class SecurityConfig {
   @Bean
   SecurityContextRepository securityContextRepository() {
     return new HttpSessionSecurityContextRepository();

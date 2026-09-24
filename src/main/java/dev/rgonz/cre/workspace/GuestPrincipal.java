@@ -1,4 +1,4 @@
-package dev.rgonz.cre.web;
+package dev.rgonz.cre.workspace;
 
 import java.io.Serial;
 import java.io.Serializable;

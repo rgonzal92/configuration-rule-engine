@@ -1,4 +1,4 @@
-package dev.rgonz.cre.web;
+package dev.rgonz.cre.core;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;

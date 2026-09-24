@@ -1,7 +1,5 @@
-package dev.rgonz.cre.web;
+package dev.rgonz.cre.workspace;
 
-import dev.rgonz.cre.domain.WorkspaceAccess;
-import dev.rgonz.cre.persistence.WorkspaceRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

@@ -1,4 +1,4 @@
-package dev.rgonz.cre.web;
+package dev.rgonz.cre.workspace;
 
 import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -12,7 +12,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @param purgeInterval delay between deletions of expired guest workspaces
  */
 @ConfigurationProperties("cre.guest")
-public record GuestProperties(Duration lifetime, int hourlyLimit, Duration purgeInterval) {
+record GuestProperties(Duration lifetime, int hourlyLimit, Duration purgeInterval) {
   public GuestProperties {
     if (lifetime == null || lifetime.compareTo(Duration.ofHours(1)) < 0) {
       throw new IllegalArgumentException("cre.guest.lifetime must be at least one hour");

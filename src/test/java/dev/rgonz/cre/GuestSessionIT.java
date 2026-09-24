@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import dev.rgonz.cre.web.WorkspacePurger;
+import dev.rgonz.cre.workspace.WorkspacePurger;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;

@@ -1,9 +1,7 @@
-package dev.rgonz.cre.web;
+package dev.rgonz.cre.workspace;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import dev.rgonz.cre.domain.Workspace;
-import dev.rgonz.cre.domain.WorkspaceAccess;
-import dev.rgonz.cre.persistence.WorkspaceRepository;
+import dev.rgonz.cre.core.ApiError;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Clock;
@@ -26,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 /** Reports the visitor's session state and starts guest workspaces. */
 @RestController
 @RequestMapping("/api")
-public class SessionController {
+class SessionController {
   private final GuestWorkspaceService guests;
   private final WorkspaceRepository workspaces;
   private final SecurityContextRepository contexts;

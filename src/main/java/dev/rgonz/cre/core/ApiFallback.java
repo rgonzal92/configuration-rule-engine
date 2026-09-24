@@ -1,4 +1,4 @@
-package dev.rgonz.cre.web;
+package dev.rgonz.cre.core;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** Gives unknown API requests a stable JSON error response. */
 @RestController
-public class ApiFallback {
+class ApiFallback {
   @RequestMapping("/api/**")
   public ResponseEntity<ApiError> notFound() {
     return ResponseEntity.status(404)

@@ -1,7 +1,5 @@
-package dev.rgonz.cre.web;
+package dev.rgonz.cre.workspace;
 
-import dev.rgonz.cre.domain.Workspace;
-import dev.rgonz.cre.persistence.WorkspaceRepository;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -11,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /** Creates guest workspaces within the shared creation limit. */
 @Service
-public class GuestWorkspaceService {
+class GuestWorkspaceService {
   private final WorkspaceRepository workspaces;
   private final GuestProperties properties;
   private final Clock clock;

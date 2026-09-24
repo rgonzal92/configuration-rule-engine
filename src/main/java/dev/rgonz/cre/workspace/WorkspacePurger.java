@@ -1,6 +1,5 @@
-package dev.rgonz.cre.web;
+package dev.rgonz.cre.workspace;
 
-import dev.rgonz.cre.persistence.WorkspaceRepository;
 import java.time.Clock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;

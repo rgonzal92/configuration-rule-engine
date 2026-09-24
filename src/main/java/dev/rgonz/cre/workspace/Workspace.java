@@ -1,4 +1,4 @@
-package dev.rgonz.cre.domain;
+package dev.rgonz.cre.workspace;
 
 import java.time.Instant;
 import java.util.Objects;

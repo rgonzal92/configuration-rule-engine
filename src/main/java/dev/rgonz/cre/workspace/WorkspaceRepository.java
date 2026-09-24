@@ -1,7 +1,5 @@
-package dev.rgonz.cre.persistence;
+package dev.rgonz.cre.workspace;
 
-import dev.rgonz.cre.domain.Workspace;
-import dev.rgonz.cre.domain.WorkspaceKind;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;

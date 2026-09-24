@@ -1,4 +1,4 @@
-package dev.rgonz.cre.domain;
+package dev.rgonz.cre.workspace;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
