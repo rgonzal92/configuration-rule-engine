@@ -24,6 +24,19 @@ after. Applying is safe to retry and refuses a batch whose check is out of date.
 tester explains why a chosen set of features is or isn't allowed. The showcase holds read-only
 laptop and fictional automotive examples.
 
+A guest can also describe a rule in plain English. The assistant only fills the relationship form
+for review; nothing is staged until the guest stages it. With `OPENAI_API_KEY` set on the server,
+one OpenAI request with a 10-second timeout and no retries proposes a source, type, and up to ten
+targets. The model returns only those fields, never free text, so anything else, including
+unrelated requests, gets the fixed help text. `OPENAI_MODEL` picks the model (default
+`gpt-5.6-luna`).
+Each guest workspace gets at most 10 live requests, and the deployment at most 100 per UTC day.
+Every answer is checked with the same rules as manual entry. Without a key, a clearly labeled
+example parser understands only "A requires B", "A is required with B", and "A can't be chosen
+with B" (also "cannot be chosen with" and "is not allowed with"), with exact feature names and one
+target. It also steps in when a live request fails or a limit is reached. Manual editing always
+works.
+
 Session and CSRF cookies are always `Secure`. Browsers accept them over plain HTTP only on
 loopback addresses such as `127.0.0.1` and `localhost`, so serve any other address over HTTPS.
 
@@ -68,4 +81,9 @@ cd frontend && npm run format
 
 `./mvnw -B verify` checks Google Java Format, Oxfmt, Oxlint, Angular tests, Java tests,
 database startup, and the packaged browser routes.
-Keep database passwords and any future provider keys outside Git.
+Keep database passwords and the OpenAI key outside Git. To run the one live OpenAI check, which
+costs money and is skipped otherwise:
+
+```sh
+CRE_LIVE_AI_SMOKE=true OPENAI_API_KEY=... ./mvnw -B verify -Dit.test=OpenAiLiveSmokeIT
+```
