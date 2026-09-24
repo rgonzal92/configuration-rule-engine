@@ -30,6 +30,8 @@ services:
       DATABASE_USER: cre
       DATABASE_PASSWORD: >-
         ${CRE_DB_PASSWORD:?Set CRE_DB_PASSWORD in a local .env file}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5.6-luna}
     ports:
       - "127.0.0.1:${CRE_HTTP_PORT:-8080}:8080"
     healthcheck:
