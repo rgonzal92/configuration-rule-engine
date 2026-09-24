@@ -6,8 +6,23 @@ It uses a generic catalog model so the same rule concepts can describe laptops o
 Visitors can start a private guest workspace without registering. It lasts four hours from
 creation, survives page refreshes and application restarts, and is deleted after it expires.
 The public showcase is read-only and needs no session. At most 50 new guest workspaces can be
-started in any rolling hour across all visitors. Catalog editing and rule checking are not
-available yet.
+started in any rolling hour across all visitors.
+
+Each guest edits a private copy of an 11-feature laptop catalog. A relationship has one source
+feature, one type, and one to ten target features. For source A and target B:
+
+| Type | Meaning |
+| --- | --- |
+| `REQUIRES` | Choosing A also requires B. |
+| `REQUIRED_WITH` | Choosing B also requires A. |
+| `NOT_ALLOWED_WITH` | A and B can't be chosen together. |
+
+Changes are staged in a pending batch of up to 32 changes, checked together, and applied in one
+step. A check lists added and removed relationships, new indirect requirements, anything that
+would make a feature impossible to choose, and the exact number of valid configurations before and
+after. Applying is safe to retry and refuses a batch whose check is out of date. A configuration
+tester explains why a chosen set of features is or isn't allowed. The showcase holds read-only
+laptop and fictional automotive examples.
 
 Session and CSRF cookies are always `Secure`. Browsers accept them over plain HTTP only on
 loopback addresses such as `127.0.0.1` and `localhost`, so serve any other address over HTTPS.
