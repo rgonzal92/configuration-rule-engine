@@ -3,8 +3,14 @@
 A small portfolio application for exploring relationships between product features.
 It uses a generic catalog model so the same rule concepts can describe laptops or other products.
 
-The current application serves the browser shell and local database-backed runtime;
-catalog editing and rule checking are not available yet.
+Visitors can start a private guest workspace without registering. It lasts four hours from
+creation, survives page refreshes and application restarts, and is deleted after it expires.
+The public showcase is read-only and needs no session. At most 50 new guest workspaces can be
+started in any rolling hour across all visitors. Catalog editing and rule checking are not
+available yet.
+
+Session and CSRF cookies are always `Secure`. Browsers accept them over plain HTTP only on
+loopback addresses such as `127.0.0.1` and `localhost`, so serve any other address over HTTPS.
 
 ## Run locally
 
