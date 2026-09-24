@@ -86,6 +86,8 @@ describe('CatalogEditor', () => {
       { id: 's', name: 'Laptop', kind: 'SHOWCASE', readOnly: true },
     ]);
     await flushLoad(catalog, emptyDraft);
+    http.expectOne('/api/suggestions/mode').flush({ mode: 'EXAMPLE' });
+    await settle();
   });
 
   afterEach(() => http.verify());
@@ -175,6 +177,30 @@ describe('CatalogEditor', () => {
     expect(element.textContent).toContain(
       'Add: Choosing Touchscreen also requires Stylus support.',
     );
+  });
+
+  it('fills the form from a suggestion without staging it', async () => {
+    const box = element.querySelector('textarea') as HTMLTextAreaElement;
+    box.value = 'Touchscreen requires Stylus support';
+    box.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    button('Suggest').click();
+
+    http.expectOne('/api/catalogs/c/suggestions').flush({
+      status: 'SUGGESTION',
+      mode: 'EXAMPLE',
+      rule: { sourceFeatureId: 'touch', kind: 'REQUIRES', targetFeatureIds: ['stylus'] },
+    });
+    await settle();
+
+    const [sourceSelect] = element.querySelectorAll('select');
+    expect(sourceSelect.value).toBe('touch');
+    expect(element.querySelector('form h4')?.textContent).toContain('Stage a relationship');
+    const stylus = [
+      ...element.querySelectorAll<HTMLInputElement>('form input[type="checkbox"]'),
+    ].find((input) => input.parentElement?.textContent?.includes('Stylus support'));
+    expect(stylus?.checked).toBe(true);
+    expect(document.activeElement).toBe(sourceSelect);
   });
 
   it('loads a pending new relationship into the form for editing', async () => {

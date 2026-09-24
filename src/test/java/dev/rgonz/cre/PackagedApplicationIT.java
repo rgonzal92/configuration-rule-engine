@@ -18,6 +18,9 @@ import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.sql.DriverManager;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -28,6 +31,8 @@ class PackagedApplicationIT {
       "Choosing Dedicated GPU also requires High-wattage charger.";
   private static final String TOUCHSCREEN_RULE =
       "Choosing Touchscreen also requires Stylus support.";
+  private static final String GPU = "00000000-0000-0000-0000-00000000f001";
+  private static final String FANLESS = "00000000-0000-0000-0000-00000000f003";
 
   @Test
   void packagedJarServesRoutesAndKeepsGuestsAcrossRestarts() throws Exception {
@@ -125,6 +130,21 @@ class PackagedApplicationIT {
           assertThat(laptopShowcase).containsText(GPU_RULE);
           assertThat(laptopShowcase).not().containsText(TOUCHSCREEN_RULE);
 
+          try (var openAi = new StubOpenAi()) {
+            stop(process);
+            process =
+                start(
+                    database,
+                    port,
+                    "assistant",
+                    "--spring.ai.openai.api-key=sk-test",
+                    "--spring.ai.openai.base-url=" + openAi.baseUrl());
+            waitUntilReady(client, base, process);
+
+            page.navigate(base + "/workspace");
+            useTheLiveAssistant(page, openAi);
+          }
+
           update(
               database,
               "update workspace set expires_at = now() - interval '1 second' where kind = 'GUEST'");
@@ -187,9 +207,72 @@ class PackagedApplicationIT {
     clickButton(page, "Test configuration");
     assertThat(page.getByText("Touchscreen requires Stylus support")).isVisible();
 
+    var assistant = assistant(page);
+    assertThat(assistant).containsText("Example parser, not AI");
+    describe(page, "Dedicated GPU can't be chosen with Fanless chassis");
+    assertThat(assistant).containsText("Review it, then stage it.");
+    stageSuggestion(page, "Add: Dedicated GPU and Fanless chassis can't be chosen together.");
+
     page.reload();
     assertThat(activeRules).containsText(TOUCHSCREEN_RULE);
     assertThat(activeRules).containsText(GPU_RULE);
+  }
+
+  /**
+   * With a key, a stubbed model answer reaches the form for review; after a failed request the
+   * assistant says it is unavailable and manual staging still works.
+   */
+  private static void useTheLiveAssistant(Page page, StubOpenAi openAi) {
+    var assistant = assistant(page);
+    assertThat(assistant).containsText("AI assistant.");
+
+    openAi.answer(
+        Map.of(
+            "status",
+            "SUGGESTION",
+            "sourceFeatureId",
+            FANLESS,
+            "kind",
+            "NOT_ALLOWED_WITH",
+            "targetFeatureIds",
+            List.of(GPU)));
+    describe(page, "fanless laptops shouldn't have a big GPU");
+    assertThat(assistant).containsText("Review it, then stage it.");
+    stageSuggestion(page, "Add: Fanless chassis and Dedicated GPU can't be chosen together.");
+
+    openAi.fail(500);
+    describe(page, "something vague");
+    assertThat(assistant).containsText("The assistant is unavailable right now.");
+
+    stage(page, "Backlit keyboard", "requires", "Extra battery");
+    clickButton(page, "Undo: Add: Choosing Backlit keyboard");
+    assertThat(page.getByText("No pending changes.")).isVisible();
+
+    assertEquals(2, openAi.requests().size());
+  }
+
+  private static Locator assistant(Page page) {
+    return page.getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("Describe a rule"));
+  }
+
+  private static void describe(Page page, String text) {
+    var assistant = assistant(page);
+    assistant.getByLabel("Rule in plain English").fill(text);
+    assistant.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Suggest")).click();
+  }
+
+  /** Stages the suggestion now in the form, checks it is pending, then undoes it. */
+  private static void stageSuggestion(Page page, String pendingText) {
+    assertThat(page.locator("form h4")).hasText("Stage a relationship");
+    clickButton(page, "Stage change");
+    assertThat(page.locator("p.status")).containsText("Pending changes saved.");
+
+    var pending =
+        page.getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("Pending changes"));
+    assertThat(pending).containsText(pendingText);
+
+    clickButton(page, "Undo: " + pendingText);
+    assertThat(page.getByText("No pending changes.")).isVisible();
   }
 
   private static void stage(Page page, String source, String kind, String... targetNames) {
@@ -259,16 +342,19 @@ class PackagedApplicationIT {
     assertFalse(asset.body().contains("Create, check, and apply feature relationships."));
   }
 
-  private static Process start(PostgreSQLContainer database, int port, String logName)
-      throws Exception {
+  private static Process start(
+      PostgreSQLContainer database, int port, String logName, String... settings) throws Exception {
     var jar = Path.of("target/configuration-rule-engine-0.1.0.jar").toAbsolutePath();
     var log = Path.of("target/packaged-application-" + logName + ".log").toFile();
-    var command =
-        new ProcessBuilder(
-            Path.of(System.getProperty("java.home"), "bin", "java").toString(),
-            "-jar",
-            jar.toString(),
-            "--server.port=" + port);
+    var arguments =
+        new ArrayList<>(
+            List.of(
+                Path.of(System.getProperty("java.home"), "bin", "java").toString(),
+                "-jar",
+                jar.toString(),
+                "--server.port=" + port));
+    arguments.addAll(List.of(settings));
+    var command = new ProcessBuilder(arguments);
 
     command.environment().put("DATABASE_URL", database.getJdbcUrl());
     command.environment().put("DATABASE_USER", database.getUsername());

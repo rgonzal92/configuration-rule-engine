@@ -77,6 +77,23 @@ export interface ConfigurationResult {
   conflicts: { message: string }[];
 }
 
+/** Which assistant answers: the live model or the example parser. */
+export type SuggestionMode = 'OPENAI' | 'EXAMPLE';
+
+/** A relationship offered for review; it is never staged automatically. */
+export interface ProposedRule {
+  sourceFeatureId: string;
+  kind: RelationshipKind;
+  targetFeatureIds: string[];
+}
+
+export interface Suggestion {
+  status: 'SUGGESTION' | 'CLARIFICATION' | 'UNAVAILABLE';
+  mode: SuggestionMode;
+  rule?: ProposedRule;
+  message?: string;
+}
+
 /** A failed request, reduced to what the page shows. */
 export interface ApiProblem {
   status: number;
@@ -137,6 +154,19 @@ export class CatalogService {
     const body = { commandId, checkedDraftVersion };
 
     return firstValueFrom(this.http.post<ApplyResult>(`/api/catalogs/${id}/draft/apply`, body));
+  }
+
+  /** Asks the assistant to read one relationship from plain English. Nothing is saved. */
+  suggest(id: string, text: string): Promise<Suggestion> {
+    return firstValueFrom(this.http.post<Suggestion>(`/api/catalogs/${id}/suggestions`, { text }));
+  }
+
+  async suggestionMode(): Promise<SuggestionMode> {
+    const view = await firstValueFrom(
+      this.http.get<{ mode: SuggestionMode }>('/api/suggestions/mode'),
+    );
+
+    return view.mode;
   }
 
   testConfiguration(id: string, featureIds: string[]): Promise<ConfigurationResult> {

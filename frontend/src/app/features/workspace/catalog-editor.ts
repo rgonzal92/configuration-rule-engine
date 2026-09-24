@@ -16,12 +16,14 @@ import {
   Draft,
   Group,
   Operation,
+  ProposedRule,
   RelationshipKind,
   toProblem,
 } from '../../core/catalog.service';
 import { ConfigurationTester } from '../../shared/configuration-tester';
 import { RelationshipList } from '../../shared/relationship-list';
 import { KIND_HELP, KIND_LABELS, describeOperation, formatCount } from '../../shared/rule-text';
+import { RuleSuggestion } from './rule-suggestion';
 import { editActive, removeActive, replacePending, stageNew, undo } from './staging';
 
 const MAX_TARGETS = 10;
@@ -34,7 +36,7 @@ type FormMode =
 
 /** The guest's catalog: stage relationship changes, check the whole batch, and apply it. */
 @Component({
-  imports: [ConfigurationTester, RelationshipList],
+  imports: [ConfigurationTester, RelationshipList, RuleSuggestion],
   selector: 'app-catalog-editor',
   templateUrl: './catalog-editor.html',
 })
@@ -133,6 +135,12 @@ export class CatalogEditor implements OnInit {
         operation.targetFeatureIds,
       );
     }
+  }
+
+  /** Puts a suggested relationship in the form, where the visitor reviews it before staging. */
+  protected useSuggestion(rule: ProposedRule): void {
+    this.fillForm({ type: 'new' }, rule.sourceFeatureId, rule.kind, rule.targetFeatureIds);
+    this.focusForm();
   }
 
   protected resetForm(): void {
@@ -319,9 +327,13 @@ export class CatalogEditor implements OnInit {
 
     // Editing starts at the form, which may be far from the button that was pressed.
     if (mode.type !== 'new') {
-      afterNextRender(() => this.sourceSelect()?.nativeElement.focus(), {
-        injector: this.injector,
-      });
+      this.focusForm();
     }
+  }
+
+  private focusForm(): void {
+    afterNextRender(() => this.sourceSelect()?.nativeElement.focus(), {
+      injector: this.injector,
+    });
   }
 }

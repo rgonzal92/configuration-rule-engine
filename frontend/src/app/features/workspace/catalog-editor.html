@@ -23,6 +23,8 @@
     (remove)="removeGroup($event)"
   />
 
+  <app-rule-suggestion [catalogId]="current.id" (suggested)="useSuggestion($event)" />
+
   <form class="panel" (submit)="$event.preventDefault(); submitForm()">
     @let editing = mode().type !== 'new';
     <h4>{{ editing ? 'Edit relationship' : 'Stage a relationship' }}</h4>
