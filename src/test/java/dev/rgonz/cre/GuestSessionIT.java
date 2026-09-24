@@ -6,61 +6,24 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.rgonz.cre.workspace.WorkspacePurger;
-import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.web.server.autoconfigure.ServerProperties;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
-import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.scheduling.config.FixedDelayTask;
 import org.springframework.scheduling.config.ScheduledTask;
 import org.springframework.scheduling.config.ScheduledTaskHolder;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
 
 /** Exercises guest sessions, expiry, CSRF, isolation, and the creation limit over real HTTP. */
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    properties = "cre.guest.purge-interval=1h")
-@Testcontainers
-class GuestSessionIT {
-  @Container @ServiceConnection
-  static final PostgreSQLContainer DATABASE = new PostgreSQLContainer("postgres:18.6");
-
-  private static final Instant START = Instant.parse("2026-03-01T12:00:00Z");
-
-  @LocalServerPort int port;
-  @Autowired MutableClock clock;
-  @Autowired JdbcClient jdbc;
+class GuestSessionIT extends ApplicationIT {
   @Autowired WorkspacePurger purger;
   @Autowired ScheduledTaskHolder scheduledTasks;
   @Autowired ServerProperties server;
-
-  @BeforeEach
-  void reset() {
-    clock.set(START);
-    jdbc.sql("DELETE FROM spring_session").update();
-    jdbc.sql("DELETE FROM workspace WHERE kind = 'GUEST'").update();
-  }
-
-  private GuestClient visitor() {
-    return new GuestClient("http://127.0.0.1:" + port);
-  }
 
   @Test
   void startedGuestKeepsOneWorkspace() throws Exception {
@@ -291,45 +254,5 @@ class GuestSessionIT {
     var refused = visitor().start();
     assertEquals(429, refused.status());
     assertEquals("GUEST_LIMIT_REACHED", refused.text("code"));
-  }
-
-  private long guestCount() {
-    return jdbc.sql("SELECT count(*) FROM workspace WHERE kind = 'GUEST'")
-        .query(Long.class)
-        .single();
-  }
-
-  /** Lets tests move application time without waiting. */
-  static final class MutableClock extends Clock {
-    private volatile Instant now = START;
-
-    void set(Instant instant) {
-      now = instant;
-    }
-
-    @Override
-    public Instant instant() {
-      return now;
-    }
-
-    @Override
-    public ZoneId getZone() {
-      return ZoneOffset.UTC;
-    }
-
-    @Override
-    public Clock withZone(ZoneId zone) {
-      throw new UnsupportedOperationException();
-    }
-  }
-
-  /** Replaces the system clock with the test clock. */
-  @TestConfiguration
-  static class ClockConfig {
-    @Bean
-    @Primary
-    MutableClock testClock() {
-      return new MutableClock();
-    }
   }
 }

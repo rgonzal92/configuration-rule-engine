@@ -22,8 +22,9 @@ import org.springframework.security.web.csrf.CsrfException;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Guest sessions, CSRF protection for browser writes, and JSON security errors. Reads are open;
- * each read endpoint applies workspace access rules itself. Other API writes need a live guest.
+ * Guest sessions, CSRF protection for browser writes, and JSON security errors. Reads and
+ * configuration checks are open; those endpoints apply workspace access rules themselves. Other API
+ * writes need a live guest.
  */
 @Configuration
 class SecurityConfig {
@@ -53,6 +54,8 @@ class SecurityConfig {
         requests ->
             requests
                 .requestMatchers(HttpMethod.POST, "/api/demo/sessions")
+                .permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/catalogs/*/configurations/check")
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/**")
                 .permitAll()

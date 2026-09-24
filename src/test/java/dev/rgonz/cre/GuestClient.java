@@ -56,6 +56,30 @@ final class GuestClient {
     return send(request);
   }
 
+  /** Sends a JSON body with the echoed CSRF header. */
+  Reply postJson(String path, Object body) throws IOException, InterruptedException {
+    return sendJson("POST", path, body);
+  }
+
+  Reply putJson(String path, Object body) throws IOException, InterruptedException {
+    return sendJson("PUT", path, body);
+  }
+
+  private Reply sendJson(String method, String path, Object body)
+      throws IOException, InterruptedException {
+    var request =
+        HttpRequest.newBuilder(URI.create(base + path))
+            .method(method, HttpRequest.BodyPublishers.ofString(JSON.writeValueAsString(body)))
+            .header("Content-Type", "application/json");
+
+    var csrf = cookies.get("XSRF-TOKEN");
+    if (csrf != null) {
+      request.header("X-XSRF-TOKEN", csrf);
+    }
+
+    return send(request);
+  }
+
   /** Loads the session state and the CSRF cookie, then starts a guest workspace. */
   Reply start() throws IOException, InterruptedException {
     get("/api/session");
