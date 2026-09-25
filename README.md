@@ -37,6 +37,18 @@ with B" (also "cannot be chosen with" and "is not allowed with"), with exact fea
 target. It also steps in when a live request fails or a limit is reached. Manual editing always
 works.
 
+The interface uses Angular with PrimeNG components (Aura theme) and Tailwind CSS, set in IBM Plex
+Sans, with IBM Plex Mono for counts and revisions. The fonts are served with the app, so pages make
+no third-party requests. Relationships are listed as source, type, and targets, with a color and
+icon for each type. On wide screens the workspace keeps the pending batch, its check result, and the
+apply button in a column beside the editor. It has light and dark themes, starting from the system
+setting, with a toggle that remembers the choice. It works from 320-pixel phone widths up, respects
+reduced-motion settings, and targets WCAG 2.2 AA: the browser test scans every main page with axe in
+both themes and requires zero violations. PrimeNG needs a PrimeUI license key, which is free for
+individuals and non-commercial open source. Set `PRIMEUI_LICENSE_KEY` when building (in `.env` for
+Compose); without it the page shows a small license notice. The key is built into the public
+JavaScript, so it is not a secret.
+
 Session and CSRF cookies are always `Secure`. Browsers accept them over plain HTTP only on
 loopback addresses such as `127.0.0.1` and `localhost`, so serve any other address over HTTPS.
 
