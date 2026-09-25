@@ -22,3 +22,6 @@ jobs:
             org.codehaus.mojo:exec-maven-plugin:3.6.3:java
       - name: Verify
         run: ./mvnw -B verify
+        env:
+          # Optional; without it the build still passes and the page shows a license notice.
+          PRIMEUI_LICENSE_KEY: ${{ secrets.PRIMEUI_LICENSE_KEY }}
