@@ -54,14 +54,21 @@ describe('RuleSuggestion', () => {
   it('labels the example parser as not AI and lists what it understands', async () => {
     await create('EXAMPLE');
 
-    expect(element.textContent).toContain('Example parser, not AI');
+    expect(element.textContent).toContain('This example parser does not use AI.');
     expect(element.textContent).toContain('A requires B');
+  });
+
+  it('shows an example rule in the empty text box', async () => {
+    await create('EXAMPLE');
+
+    const box = element.querySelector('textarea') as HTMLTextAreaElement;
+    expect(box.placeholder).toBe("For example: Fanless chassis can't be chosen with Dedicated GPU");
   });
 
   it('labels the live assistant', async () => {
     await create('OPENAI');
 
-    expect(element.textContent).toContain('AI assistant');
+    expect(element.textContent).toContain('The AI assistant turns your description into a draft');
   });
 
   it('hands a suggestion to the form without staging it', async () => {

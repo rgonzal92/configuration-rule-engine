@@ -1,14 +1,97 @@
-<main class="shell">
-  <p class="eyebrow">Generic product catalogs</p>
-  <h1>Configuration Rule Engine</h1>
-  <p class="intro">Create, check, and apply feature relationships.</p>
-  <p>
-    Explore how product options depend on or exclude one another. Stage changes to a private laptop
-    catalog, check their combined effect, and apply them together.
-  </p>
-  <nav aria-label="Main navigation">
-    <a href="/workspace">Open workspace</a>
-    <a href="/showcase">Explore showcase</a>
-  </nav>
+<a
+  href="#main"
+  (click)="skipToMain($event)"
+  class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-surface-0 focus:px-4 focus:py-3 focus:font-semibold focus:text-primary focus:shadow dark:focus:bg-surface-900"
+>
+  Skip to main content
+</a>
+
+<header class="border-b border-surface bg-surface-0 dark:bg-surface-900">
+  <div
+    class="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 sm:px-6"
+  >
+    <a
+      routerLink="/"
+      class="flex min-w-0 flex-1 items-center gap-2 font-mono text-sm font-medium text-surface-900 no-underline sm:flex-none dark:text-surface-0"
+    >
+      <img src="logo.png" alt="" width="28" height="28" class="shrink-0" />
+      Configuration Rule Engine
+    </a>
+    <nav aria-label="Main navigation" class="order-last flex w-full gap-1 sm:order-none sm:w-auto">
+      <a
+        pButton
+        pRipple
+        [text]="true"
+        severity="secondary"
+        routerLink="/workspace"
+        routerLinkActive="is-active"
+        ariaCurrentWhenActive="page"
+        class="nav-link"
+      >
+        Workspace
+      </a>
+      <a
+        pButton
+        pRipple
+        [text]="true"
+        severity="secondary"
+        routerLink="/showcase"
+        routerLinkActive="is-active"
+        ariaCurrentWhenActive="page"
+        class="nav-link"
+      >
+        Showcase
+      </a>
+    </nav>
+    <div class="ml-auto flex items-center gap-1">
+      <button
+        pButton
+        pRipple
+        type="button"
+        [text]="true"
+        severity="secondary"
+        aria-label="Dark theme"
+        [attr.aria-pressed]="theme.dark()"
+        (click)="theme.toggle()"
+        class="min-h-11 min-w-11"
+      >
+        <i [class]="theme.dark() ? 'pi pi-moon' : 'pi pi-sun'" aria-hidden="true"></i>
+      </button>
+      <a
+        pButton
+        pRipple
+        [text]="true"
+        severity="secondary"
+        href="https://github.com/rgonzal92/configuration-rule-engine"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Source code on GitHub (opens in a new tab)"
+        class="min-h-11 min-w-11"
+      >
+        <i class="pi pi-github" aria-hidden="true"></i>
+      </a>
+      <a
+        pButton
+        pRipple
+        [text]="true"
+        severity="secondary"
+        href="https://www.linkedin.com/in/rgonzal92"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="LinkedIn (opens in a new tab)"
+        class="min-h-11 min-w-11"
+      >
+        <i class="pi pi-linkedin" aria-hidden="true"></i>
+      </a>
+    </div>
+  </div>
+</header>
+
+<main
+  #main
+  id="main"
+  tabindex="-1"
+  class="mx-auto w-full max-w-6xl px-4 pb-16 pt-6 outline-none sm:px-6"
+>
   <router-outlet />
 </main>

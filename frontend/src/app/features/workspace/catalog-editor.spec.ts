@@ -1,6 +1,8 @@
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { Select } from 'primeng/select';
 import { CatalogEditor } from './catalog-editor';
 import { Catalog, Draft, toProblem } from '../../core/catalog.service';
 
@@ -62,6 +64,16 @@ describe('CatalogEditor', () => {
     await settle();
   }
 
+  /** Picks a source feature the way the select reports a choice. */
+  async function chooseSource(id: string): Promise<void> {
+    fixture.debugElement.queryAll(By.directive(Select))[0].triggerEventHandler('ngModelChange', id);
+    await settle();
+  }
+
+  function checkbox(id: string): HTMLInputElement {
+    return element.querySelector(`#target-${id}`) as HTMLInputElement;
+  }
+
   function button(name: string): HTMLButtonElement {
     const match = [...element.querySelectorAll('button')].find(
       (candidate) => candidate.textContent?.trim() === name,
@@ -100,15 +112,9 @@ describe('CatalogEditor', () => {
   });
 
   it('stages a relationship from the form with the expected versions', async () => {
-    const [sourceSelect] = element.querySelectorAll('select');
-    sourceSelect.value = 'touch';
-    sourceSelect.dispatchEvent(new Event('change'));
-    await settle();
+    await chooseSource('touch');
 
-    const stylus = [...element.querySelectorAll('label.choice')]
-      .filter((label) => label.closest('form'))
-      .find((label) => label.textContent?.includes('Stylus support'));
-    stylus?.querySelector('input')?.click();
+    checkbox('stylus').click();
     button('Stage change').click();
 
     const request = http.expectOne('/api/catalogs/c/draft');
@@ -193,14 +199,11 @@ describe('CatalogEditor', () => {
     });
     await settle();
 
-    const [sourceSelect] = element.querySelectorAll('select');
-    expect(sourceSelect.value).toBe('touch');
-    expect(element.querySelector('form h4')?.textContent).toContain('Stage a relationship');
-    const stylus = [
-      ...element.querySelectorAll<HTMLInputElement>('form input[type="checkbox"]'),
-    ].find((input) => input.parentElement?.textContent?.includes('Stylus support'));
-    expect(stylus?.checked).toBe(true);
-    expect(document.activeElement).toBe(sourceSelect);
+    const source = element.querySelector('#source-feature') as HTMLElement;
+    expect(source.textContent).toContain('Touchscreen');
+    expect(element.querySelector('form h3')?.textContent).toContain('Stage a relationship');
+    expect(checkbox('stylus').checked).toBe(true);
+    expect(document.activeElement).toBe(source);
   });
 
   it('loads a pending new relationship into the form for editing', async () => {
@@ -210,11 +213,8 @@ describe('CatalogEditor', () => {
     edit?.click();
     await settle();
 
-    expect(element.querySelector('form h4')?.textContent).toContain('Edit relationship');
-    const stylus = [
-      ...element.querySelectorAll<HTMLInputElement>('form input[type="checkbox"]'),
-    ].find((input) => input.parentElement?.textContent?.includes('Stylus support'));
-    expect(stylus?.checked).toBe(true);
+    expect(element.querySelector('form h3')?.textContent).toContain('Edit relationship');
+    expect(checkbox('stylus').checked).toBe(true);
   });
 
   it('offers no second change for a relationship that already has one pending', async () => {
@@ -233,7 +233,7 @@ describe('CatalogEditor', () => {
     await reloadWith(touchDraft);
     element.querySelector<HTMLButtonElement>('button[aria-label^="Edit pending"]')?.click();
     await settle();
-    expect(element.querySelector('form h4')?.textContent).toContain('Edit relationship');
+    expect(element.querySelector('form h3')?.textContent).toContain('Edit relationship');
 
     button('Check pending changes').click();
     http
@@ -241,7 +241,7 @@ describe('CatalogEditor', () => {
       .flush({ code: 'STALE_DRAFT', message: 'Stale.' }, { status: 409, statusText: 'Conflict' });
     await flushLoad(catalog, emptyDraft);
 
-    expect(element.querySelector('form h4')?.textContent).toContain('Stage a relationship');
+    expect(element.querySelector('form h3')?.textContent).toContain('Stage a relationship');
     expect(element.textContent).toContain('Stale. The latest version has been loaded.');
   });
 
@@ -259,7 +259,7 @@ describe('CatalogEditor', () => {
       .flush({ ...emptyDraft, draftVersion: 2, operations: [{ type: 'DELETE', groupId: 'g1' }] });
     await settle();
 
-    expect(element.querySelector('form h4')?.textContent).toContain('Stage a relationship');
+    expect(element.querySelector('form h3')?.textContent).toContain('Stage a relationship');
   });
 
   describe('toProblem', () => {

@@ -1,38 +1,55 @@
 import { Component, inject, input, linkedSignal, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ButtonDirective } from 'primeng/button';
+import { Checkbox } from 'primeng/checkbox';
+import { Ripple } from 'primeng/ripple';
+import { Tag } from 'primeng/tag';
 import { Catalog, CatalogService, ConfigurationResult, toProblem } from '../core/catalog.service';
 
 let testerCount = 0;
 
 /** Lets a visitor choose features and see whether the active rules allow that combination. */
 @Component({
+  imports: [ButtonDirective, Checkbox, FormsModule, Ripple, Tag],
   selector: 'app-configuration-tester',
   template: `
-    <section class="panel" [attr.aria-labelledby]="headingId">
-      <h4 [id]="headingId">Test a configuration</h4>
-      <fieldset [disabled]="busy()">
-        <legend>Features to choose</legend>
+    <section [attr.aria-labelledby]="headingId">
+      <h3 [id]="headingId" class="font-semibold">Test a configuration</h3>
+      <fieldset class="choices mt-3" [disabled]="busy()">
+        <legend class="px-1 font-semibold">Features to choose</legend>
         @for (feature of catalog().features; track feature.id) {
-          <label class="choice">
-            <input
-              type="checkbox"
-              [checked]="selected().includes(feature.id)"
-              (change)="toggle(feature.id)"
+          @let inputId = headingId + '-' + feature.id;
+          <div class="choice">
+            <p-checkbox
+              [inputId]="inputId"
+              [binary]="true"
+              [ngModel]="selected().includes(feature.id)"
+              (ngModelChange)="toggle(feature.id)"
             />
-            {{ feature.name }}
-          </label>
+            <label [for]="inputId">{{ feature.name }}</label>
+          </div>
         }
       </fieldset>
-      <button type="button" [disabled]="busy()" (click)="test()">Test configuration</button>
+      <button
+        pButton
+        pRipple
+        type="button"
+        class="mt-3 min-h-11"
+        [disabled]="busy()"
+        (click)="test()"
+      >
+        Test configuration
+      </button>
 
-      <div role="status">
+      <div role="status" class="mt-3">
         @let outcome = result();
         @if (problem()) {
           <p>{{ problem() }}</p>
         } @else if (outcome?.valid) {
-          <p>This configuration is allowed.</p>
+          <p-tag severity="success" icon="pi pi-check" value="This configuration is allowed." />
         } @else if (outcome) {
-          <p>This configuration is not allowed:</p>
-          <ul>
+          <p-tag severity="danger" icon="pi pi-times" value="This configuration is not allowed:" />
+          <ul class="rules">
             @for (item of outcome.missing; track item.message) {
               <li>{{ item.message }}</li>
             }

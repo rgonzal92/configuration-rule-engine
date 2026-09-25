@@ -1,10 +1,17 @@
 import { Catalog, Operation, RelationshipKind } from '../core/catalog.service';
 
-/** Labels for the relationship type select. */
+/** Labels for each relationship type, in the form's select and in the relationship list. */
 export const KIND_LABELS: Record<RelationshipKind, string> = {
   REQUIRES: 'requires',
   REQUIRED_WITH: 'is required with',
   NOT_ALLOWED_WITH: "can't be chosen with",
+};
+
+/** The icon shown with each type's label. */
+export const KIND_ICONS: Record<RelationshipKind, string> = {
+  REQUIRES: 'pi pi-arrow-right',
+  REQUIRED_WITH: 'pi pi-arrow-left',
+  NOT_ALLOWED_WITH: 'pi pi-ban',
 };
 
 /** What each type means, shown beside the form. */
@@ -84,4 +91,15 @@ export function describeOperation(catalog: Catalog, operation: Operation): strin
 
 export function formatCount(count: number): string {
   return count.toLocaleString('en-US');
+}
+
+const PERCENT = new Intl.NumberFormat('en-US', {
+  style: 'percent',
+  maximumFractionDigits: 1,
+  signDisplay: 'exceptZero',
+});
+
+/** The change from one count to another, such as "-37.5%"; empty when there was nothing before. */
+export function formatChange(before: number, after: number): string {
+  return before === 0 ? '' : PERCENT.format((after - before) / before);
 }

@@ -1,4 +1,7 @@
 import { Component, OnInit, inject, input, output, signal } from '@angular/core';
+import { ButtonDirective } from 'primeng/button';
+import { Ripple } from 'primeng/ripple';
+import { Textarea } from 'primeng/textarea';
 import {
   CatalogService,
   ProposedRule,
@@ -11,19 +14,20 @@ import {
  * anything, and every message it shows is plain text.
  */
 @Component({
+  imports: [ButtonDirective, Ripple, Textarea],
   selector: 'app-rule-suggestion',
   template: `
-    <section class="panel" aria-labelledby="suggestion-heading">
-      <h4 id="suggestion-heading">Describe a rule</h4>
+    <section aria-labelledby="suggestion-heading">
+      <h3 id="suggestion-heading" class="font-semibold">Describe a rule</h3>
       <p class="help">
         @switch (mode()) {
           @case ('OPENAI') {
-            AI assistant. It proposes a relationship for you to review; nothing changes until you
-            stage it.
+            The AI assistant turns your description into a draft relationship in the form below.
+            Review the draft before staging it; nothing changes until you do.
           }
           @case ('EXAMPLE') {
-            Example parser, not AI. It understands only "A requires B", "A is required with B", and
-            "A can't be chosen with B", using exact feature names.
+            This example parser does not use AI. It recognizes exact feature names in three
+            patterns: "A requires B", "A is required with B", and "A can't be chosen with B".
           }
           @default {
             Loading the assistant…
@@ -33,16 +37,26 @@ import {
       <label class="field">
         Rule in plain English
         <textarea
+          pTextarea
+          class="w-full font-normal"
           rows="2"
           maxlength="500"
+          placeholder="For example: Fanless chassis can't be chosen with Dedicated GPU"
           [value]="text()"
           (input)="text.set($any($event.target).value)"
         ></textarea>
       </label>
-      <button type="button" [disabled]="busy() || !text().trim()" (click)="suggest()">
+      <button
+        pButton
+        pRipple
+        type="button"
+        class="min-h-11"
+        [disabled]="busy() || !text().trim()"
+        (click)="suggest()"
+      >
         Suggest
       </button>
-      <p role="status">{{ outcome() }}</p>
+      <p role="status" class="mt-3">{{ outcome() }}</p>
     </section>
   `,
 })

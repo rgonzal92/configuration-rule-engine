@@ -1,4 +1,4 @@
-import { describeOperation, describeRule, formatCount, joinNames } from './rule-text';
+import { describeOperation, describeRule, formatChange, formatCount, joinNames } from './rule-text';
 import { Catalog } from '../core/catalog.service';
 
 const catalog: Catalog = {
@@ -60,5 +60,12 @@ describe('rule text', () => {
 
   it('formats counts with separators', () => {
     expect(formatCount(1536)).toBe('1,536');
+  });
+
+  it('formats the change between two counts as a signed percentage', () => {
+    expect(formatChange(1536, 960)).toBe('-37.5%');
+    expect(formatChange(12, 16)).toBe('+33.3%');
+    expect(formatChange(9, 9)).toBe('0%');
+    expect(formatChange(0, 4)).toBe('');
   });
 });

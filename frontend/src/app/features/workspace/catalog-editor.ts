@@ -9,6 +9,16 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Badge } from 'primeng/badge';
+import { ButtonDirective } from 'primeng/button';
+import { Card } from 'primeng/card';
+import { Checkbox } from 'primeng/checkbox';
+import { Divider } from 'primeng/divider';
+import { Message } from 'primeng/message';
+import { Ripple } from 'primeng/ripple';
+import { Select } from 'primeng/select';
+import { Tag } from 'primeng/tag';
 import {
   Catalog,
   CatalogService,
@@ -22,11 +32,26 @@ import {
 } from '../../core/catalog.service';
 import { ConfigurationTester } from '../../shared/configuration-tester';
 import { RelationshipList } from '../../shared/relationship-list';
-import { KIND_HELP, KIND_LABELS, describeOperation, formatCount } from '../../shared/rule-text';
+import {
+  KIND_HELP,
+  KIND_LABELS,
+  describeOperation,
+  formatChange,
+  formatCount,
+} from '../../shared/rule-text';
 import { RuleSuggestion } from './rule-suggestion';
 import { editActive, removeActive, replacePending, stageNew, undo } from './staging';
 
 const MAX_TARGETS = 10;
+/** Matches DraftRules.MAX_OPERATIONS, the server's limit on changes in one batch. */
+const MAX_CHANGES = 32;
+
+/** The diff marker for each kind of pending change. */
+const DIFF_MARKERS: Record<Operation['type'], 'add' | 'change' | 'remove'> = {
+  CREATE: 'add',
+  UPDATE: 'change',
+  DELETE: 'remove',
+};
 
 /** What the relationship form is editing. */
 type FormMode =
@@ -36,21 +61,40 @@ type FormMode =
 
 /** The guest's catalog: stage relationship changes, check the whole batch, and apply it. */
 @Component({
-  imports: [ConfigurationTester, RelationshipList, RuleSuggestion],
+  imports: [
+    Badge,
+    ButtonDirective,
+    Card,
+    Checkbox,
+    ConfigurationTester,
+    Divider,
+    FormsModule,
+    Message,
+    RelationshipList,
+    Ripple,
+    RuleSuggestion,
+    Select,
+    Tag,
+  ],
   selector: 'app-catalog-editor',
   templateUrl: './catalog-editor.html',
 })
 export class CatalogEditor implements OnInit {
   private readonly catalogs = inject(CatalogService);
   private readonly injector = inject(Injector);
-  private readonly sourceSelect = viewChild<ElementRef<HTMLSelectElement>>('sourceSelect');
+  private readonly sourceSelect = viewChild<Select>('sourceSelect');
   private readonly pendingHeading = viewChild<ElementRef<HTMLElement>>('pendingHeading');
 
-  protected readonly kinds = Object.keys(KIND_LABELS) as RelationshipKind[];
-  protected readonly kindLabels = KIND_LABELS;
+  protected readonly kindOptions = (Object.keys(KIND_LABELS) as RelationshipKind[]).map((kind) => ({
+    value: kind,
+    label: KIND_LABELS[kind],
+  }));
   protected readonly kindHelp = KIND_HELP;
   protected readonly maxTargets = MAX_TARGETS;
+  protected readonly maxChanges = MAX_CHANGES;
+  protected readonly diffOf = DIFF_MARKERS;
   protected readonly formatCount = formatCount;
+  protected readonly formatChange = formatChange;
 
   protected readonly catalog = signal<Catalog | null>(null);
   protected readonly draft = signal<Draft | null>(null);
@@ -332,7 +376,7 @@ export class CatalogEditor implements OnInit {
   }
 
   private focusForm(): void {
-    afterNextRender(() => this.sourceSelect()?.nativeElement.focus(), {
+    afterNextRender(() => this.sourceSelect()?.focus(), {
       injector: this.injector,
     });
   }

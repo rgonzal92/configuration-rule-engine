@@ -1,17 +1,19 @@
 import { DatePipe } from '@angular/common';
 import { Component, ElementRef, OnInit, inject, viewChild } from '@angular/core';
+import { ButtonDirective } from 'primeng/button';
+import { Ripple } from 'primeng/ripple';
 import { CatalogEditor } from './catalog-editor';
 import { SessionService } from '../../core/session.service';
 
 /** Starts or resumes the visitor's private guest workspace. */
 @Component({
-  imports: [CatalogEditor, DatePipe],
+  imports: [ButtonDirective, CatalogEditor, DatePipe, Ripple],
   selector: 'app-workspace-page',
   template: `
     <section aria-labelledby="workspace-heading">
-      <h2 id="workspace-heading">Your workspace</h2>
+      <h1 id="workspace-heading" class="text-xl font-semibold">Your workspace</h1>
       @let state = session.state();
-      <p #status role="status" tabindex="-1">
+      <p #status role="status" tabindex="-1" class="help mt-1">
         @switch (state.kind) {
           @case ('loading') {
             Checking your workspace…
@@ -22,7 +24,7 @@ import { SessionService } from '../../core/session.service';
           @case ('guest') {
             @let until = state.expiresAt | date: 'shortTime';
             Your private workspace is available until
-            <time [attr.datetime]="state.expiresAt">{{ until }}</time>
+            <time class="font-mono" [attr.datetime]="state.expiresAt">{{ until }}</time>
           }
           @case ('expired') {
             Your guest workspace expired, and its changes were removed.
@@ -36,9 +38,13 @@ import { SessionService } from '../../core/session.service';
         }
       </p>
       @if (state.kind === 'anonymous') {
-        <button type="button" (click)="start()">Start guest workspace</button>
+        <button pButton pRipple type="button" class="mt-2 min-h-11" (click)="start()">
+          Start guest workspace
+        </button>
       } @else if (state.kind === 'expired') {
-        <button type="button" (click)="start()">Start a new guest workspace</button>
+        <button pButton pRipple type="button" class="mt-2 min-h-11" (click)="start()">
+          Start a new guest workspace
+        </button>
       } @else if (state.kind === 'guest') {
         <app-catalog-editor />
       }

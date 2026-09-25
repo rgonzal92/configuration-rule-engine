@@ -1,110 +1,164 @@
-:root {
-  color: #163039;
-  background: #f5f9fa;
-  font-family: system-ui, sans-serif;
-  line-height: 1.5;
+/* PrimeNG styles sit between Tailwind's base and utilities, so utilities can adjust components. */
+@layer theme, base, primeng, components, utilities;
+
+@import "tailwindcss";
+@import "tailwindcss-primeui";
+@import "primeicons/primeicons.css";
+@import "@fontsource-variable/ibm-plex-sans";
+@import "@fontsource/ibm-plex-mono/latin-400.css";
+@import "@fontsource/ibm-plex-mono/latin-500.css";
+
+/* The fonts are served with the app rather than from a font CDN, so pages make no third-party
+   requests. */
+@theme {
+  --font-sans: "IBM Plex Sans Variable", "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 }
 
-body {
-  margin: 0;
+/* Dark styles follow the class the theme toggle puts on the page root, as PrimeNG does. */
+@custom-variant dark (&:where(.app-dark, .app-dark *));
+
+@layer base {
+  body {
+    @apply bg-surface-50 text-surface-900 dark:bg-surface-950 dark:text-surface-0;
+    line-height: 1.5;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary;
+  }
+
+  /* Set for a moment while the theme changes, so colors switch at once instead of animating. */
+  .theme-switching,
+  .theme-switching *,
+  .theme-switching *::before,
+  .theme-switching *::after {
+    transition: none !important;
+  }
+
+  /* Visitors who ask for less motion get instant state changes instead of animations. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
 
-/* Shared catalog layout. Kept global so each component stays within its style budget. */
-.catalog {
-  margin: 2rem 0;
-}
+@layer components {
+  /* Cards are flat: a hairline border instead of a shadow. */
+  .p-card {
+    @apply border border-surface;
+  }
 
-.panel {
-  background: white;
-  border: 1px solid #c9dbe1;
-  border-radius: 0.5rem;
-  margin: 1.5rem 0;
-  padding: 1rem 1.25rem;
-}
+  /* The current page's link is marked with the primary color and an underline. */
+  .nav-link {
+    @apply min-h-11;
+  }
 
-.panel h4,
-.panel h3 {
-  margin-top: 0;
-}
+  .nav-link.is-active {
+    @apply text-primary shadow-[inset_0_-2px_0_var(--p-primary-color)];
+  }
 
-fieldset {
-  border: 1px solid #c9dbe1;
-  border-radius: 0.5rem;
-  display: grid;
-  gap: 0.35rem;
-  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
-  margin: 0.75rem 0;
-}
+  /* A grid of labelled checkboxes that becomes one column on narrow screens. */
+  .choices {
+    @apply m-0 grid grid-cols-1 gap-1 rounded border border-surface p-2 sm:grid-cols-2 lg:grid-cols-3;
+  }
 
-.plain {
-  border: 0;
-  display: block;
-  margin: 0;
-  min-width: 0;
-  padding: 0;
-}
+  .choice {
+    @apply flex min-h-11 items-center gap-2;
+  }
 
-legend {
-  font-weight: 600;
-  padding: 0 0.25rem;
-}
+  /* A list of plain-language rules whose long sentences wrap on small screens. */
+  .rules {
+    @apply mt-2 grid list-disc gap-3 pl-5 wrap-break-word;
+  }
 
-.field {
-  display: grid;
-  font-weight: 600;
-  gap: 0.25rem;
-  margin: 0.75rem 0;
-}
+  /* A labelled form control stacked under its label. */
+  .field {
+    @apply my-3 grid gap-1 font-semibold;
+  }
 
-.field select {
-  font: inherit;
-  max-width: 100%;
-  padding: 0.4rem;
-}
+  .help {
+    @apply m-0 text-muted-color;
+  }
 
-.choice {
-  align-items: center;
-  display: flex;
-  gap: 0.4rem;
-}
+  /* Facts about a catalog or batch: revision, counts, and times. */
+  .meta {
+    @apply font-mono text-[0.8125rem] text-muted-color;
+  }
 
-.help {
-  color: #3d5a64;
-  margin: 0;
-}
+  /* Small uppercase labels over columns and result lists. */
+  .label {
+    @apply font-mono text-xs font-medium tracking-wide text-muted-color uppercase;
+  }
 
-.rules {
-  display: grid;
-  gap: 0.5rem;
-  padding-left: 1.25rem;
-}
+  /*
+   * Relationship rows: source, type, and targets in columns on wide screens, stacked on narrow
+   * ones. The header and every row share the table's columns through subgrid, so they line up.
+   */
+  .rel-table {
+    @apply md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,11rem)_minmax(0,2fr)_auto] md:gap-x-3;
+  }
 
-.rules li {
-  overflow-wrap: anywhere;
-}
+  .rel-head {
+    @apply hidden border-b border-surface pb-2 md:col-span-full md:grid md:grid-cols-subgrid;
+  }
 
-.actions {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-left: 0.5rem;
-}
+  .rel-rows {
+    @apply m-0 list-none p-0 md:col-span-full md:grid md:grid-cols-subgrid;
+  }
 
-.tag {
-  background: #fff4d6;
-  border-radius: 0.25rem;
-  font-size: 0.85rem;
-  margin-left: 0.5rem;
-  padding: 0 0.35rem;
-}
+  .rel-row {
+    @apply relative flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-surface py-2 wrap-break-word last:border-b-0 md:col-span-full md:grid md:grid-cols-subgrid;
+  }
 
-.details {
-  display: block;
-}
+  /* Each relationship type keeps one color, always shown next to its name and icon. */
+  .p-tag[data-kind="REQUIRES"] {
+    @apply bg-teal-50 text-teal-800 dark:bg-teal-500/15 dark:text-teal-300;
+  }
 
-button {
-  font: inherit;
-  margin: 0.25rem 0.5rem 0.25rem 0;
-  min-height: 2.5rem;
-  padding: 0.4rem 0.9rem;
+  .p-tag[data-kind="REQUIRED_WITH"] {
+    @apply bg-violet-50 text-violet-800 dark:bg-violet-500/15 dark:text-violet-300;
+  }
+
+  .p-tag[data-kind="NOT_ALLOWED_WITH"] {
+    @apply bg-pink-50 text-pink-800 dark:bg-pink-500/15 dark:text-pink-300;
+  }
+
+  /* Changes listed like a diff: a colored marker for added, changed, and removed lines. */
+  .diff-list {
+    @apply m-0 grid list-none gap-2 p-0;
+  }
+
+  .diff {
+    @apply grid grid-cols-[1rem_minmax(0,1fr)] gap-x-2 wrap-break-word;
+  }
+
+  .diff::before {
+    @apply font-mono font-medium;
+  }
+
+  .diff[data-diff="add"]::before {
+    content: "+" / "";
+    @apply text-green-800 dark:text-green-400;
+  }
+
+  .diff[data-diff="change"]::before {
+    content: "~" / "";
+    @apply text-amber-800 dark:text-amber-400;
+  }
+
+  .diff[data-diff="remove"]::before {
+    content: "−" / "";
+    @apply text-red-700 dark:text-red-400;
+  }
+
+  /* The headline number of a check. */
+  .metric-value {
+    @apply font-mono text-2xl font-medium tabular-nums;
+  }
 }

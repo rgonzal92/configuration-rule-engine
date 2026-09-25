@@ -1,21 +1,30 @@
 import { Component, OnInit, inject, input, signal } from '@angular/core';
+import { Card } from 'primeng/card';
+import { Divider } from 'primeng/divider';
 import { Catalog, CatalogService, toProblem } from '../../core/catalog.service';
 import { ConfigurationTester } from '../../shared/configuration-tester';
 import { RelationshipList } from '../../shared/relationship-list';
 
 /** A read-only catalog: its features, relationships, and a configuration tester. */
 @Component({
-  imports: [ConfigurationTester, RelationshipList],
+  imports: [Card, ConfigurationTester, Divider, RelationshipList],
   selector: 'app-catalog-viewer',
   template: `
     @let current = catalog();
     @if (current) {
-      <article class="catalog" [attr.aria-label]="current.name + ' catalog'">
-        <h3>{{ current.name }}</h3>
-        <p>{{ current.features.length }} optional features. Read-only.</p>
-        <h4>Relationships</h4>
-        <app-relationship-list [catalog]="current" />
-        <app-configuration-tester [catalog]="current" />
+      <article [attr.aria-label]="current.name + ' catalog'">
+        <p-card>
+          <div class="flex flex-wrap items-baseline justify-between gap-x-4">
+            <h2 class="text-lg font-semibold">{{ current.name }}</h2>
+            <p class="meta">
+              rev {{ current.revision }} · {{ current.features.length }} features · read-only
+            </p>
+          </div>
+          <h3 class="label mt-4 mb-1">Relationships</h3>
+          <app-relationship-list [catalog]="current" />
+          <p-divider />
+          <app-configuration-tester [catalog]="current" />
+        </p-card>
       </article>
     } @else if (problem()) {
       <p role="status">{{ problem() }}</p>

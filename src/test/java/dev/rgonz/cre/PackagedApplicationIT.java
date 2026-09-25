@@ -5,11 +5,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.deque.html.axecore.playwright.AxeBuilder;
+import com.deque.html.axecore.results.Rule;
+import com.microsoft.playwright.Browser;
+import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.options.AriaRole;
-import com.microsoft.playwright.options.SelectOption;
+import com.microsoft.playwright.options.ReducedMotion;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -22,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
@@ -31,6 +36,29 @@ class PackagedApplicationIT {
       "Choosing Dedicated GPU also requires High-wattage charger.";
   private static final String TOUCHSCREEN_RULE =
       "Choosing Touchscreen also requires Stylus support.";
+
+  /** Lists the innermost elements that reach past the right edge of the viewport. */
+  private static final String OVERFLOW =
+      """
+      [...document.querySelectorAll('body *')]
+        .filter((e) => e.getBoundingClientRect().right > document.documentElement.clientWidth)
+        .filter((e) => ![...e.children].some((c) =>
+          c.getBoundingClientRect().right > document.documentElement.clientWidth))
+        .map((e) => e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + ' "'
+          + (e.textContent || '').trim().slice(0, 30) + '" right='
+          + Math.round(e.getBoundingClientRect().right))
+        .join('; ')
+        + ' | scrollWidth=' + document.documentElement.scrollWidth
+        + ' clientWidth=' + document.documentElement.clientWidth
+        + ' widest=' + [...document.querySelectorAll('body, body *')]
+          .map((e) => [e, Math.max(e.getBoundingClientRect().right, e.scrollWidth)])
+          .sort((a, b) => b[1] - a[1]).slice(0, 4)
+          .map(([e, r]) => e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + '.'
+            + String(e.className).slice(0, 40) + '=' + Math.round(r)).join(', ')
+      """;
+
+  private static final List<String> WCAG_TAGS =
+      List.of("wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa");
   private static final String GPU = "00000000-0000-0000-0000-00000000f001";
   private static final String FANLESS = "00000000-0000-0000-0000-00000000f003";
 
@@ -59,20 +87,27 @@ class PackagedApplicationIT {
 
         try (var playwright = Playwright.create();
             var browser = playwright.chromium().launch();
-            var context = browser.newContext()) {
+            var context = newContext(browser)) {
           var page = context.newPage();
           var liveMessage = page.getByText("Your private workspace is available until");
 
           page.navigate(base + "/");
           assertThat(page.locator("h1")).hasText("Configuration Rule Engine");
+          checkTypography(page);
+          checkKeyboardBasics(page);
+          assertAccessible(page, "home");
 
           page.navigate(base + "/showcase");
           assertThat(page.getByText("These examples are read-only.")).isVisible();
+          assertThat(page.getByRole(AriaRole.ARTICLE)).hasCount(2);
+          assertAccessible(page, "showcase");
 
           page.navigate(base + "/workspace");
           var startButton =
               page.getByRole(
                   AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Start guest workspace"));
+          assertThat(startButton).isVisible();
+          assertAccessible(page, "workspace before starting");
           startButton.click();
           assertThat(liveMessage).isVisible();
 
@@ -94,7 +129,7 @@ class PackagedApplicationIT {
 
           walkThroughTheCatalogWorkflow(page);
 
-          try (var otherGuest = browser.newContext()) {
+          try (var otherGuest = newContext(browser)) {
             var otherPage = otherGuest.newPage();
             otherPage.navigate(base + "/workspace");
             otherPage
@@ -107,7 +142,7 @@ class PackagedApplicationIT {
             assertThat(otherRules).not().containsText(TOUCHSCREEN_RULE);
           }
 
-          try (var newVisitor = browser.newContext()) {
+          try (var newVisitor = newContext(browser)) {
             var visitorPage = newVisitor.newPage();
             visitorPage.navigate(base + "/showcase");
 
@@ -173,6 +208,7 @@ class PackagedApplicationIT {
     clickButton(page, "Check pending changes");
     assertThat(checkResult).containsText("Dedicated GPU could never be chosen");
     assertThat(button(page, "Apply changes")).isDisabled();
+    assertAccessible(page, "workspace with a blocked check result");
 
     clickButton(page, "Undo: Add: Dedicated GPU");
     assertThat(page.getByText("No pending changes.")).isVisible();
@@ -182,7 +218,7 @@ class PackagedApplicationIT {
     assertThat(checkResult).containsText("Valid configurations: 1,536 → 960");
 
     clickButton(page, "Edit pending: Add: Choosing Touchscreen");
-    assertThat(page.locator("form h4")).hasText("Edit relationship");
+    assertThat(page.locator("form h3")).hasText("Edit relationship");
 
     var highResolution = targets(page).getByLabel("High-resolution display");
     assertThat(highResolution).isChecked();
@@ -208,9 +244,10 @@ class PackagedApplicationIT {
     assertThat(page.getByText("Touchscreen requires Stylus support")).isVisible();
 
     var assistant = assistant(page);
-    assertThat(assistant).containsText("Example parser, not AI");
+    assertThat(assistant).containsText("This example parser does not use AI.");
     describe(page, "Dedicated GPU can't be chosen with Fanless chassis");
     assertThat(assistant).containsText("Review it, then stage it.");
+    assertAccessible(page, "workspace with an assistant reply");
     stageSuggestion(page, "Add: Dedicated GPU and Fanless chassis can't be chosen together.");
 
     page.reload();
@@ -224,7 +261,7 @@ class PackagedApplicationIT {
    */
   private static void useTheLiveAssistant(Page page, StubOpenAi openAi) {
     var assistant = assistant(page);
-    assertThat(assistant).containsText("AI assistant.");
+    assertThat(assistant).containsText("The AI assistant turns your description");
 
     openAi.answer(
         Map.of(
@@ -263,7 +300,7 @@ class PackagedApplicationIT {
 
   /** Stages the suggestion now in the form, checks it is pending, then undoes it. */
   private static void stageSuggestion(Page page, String pendingText) {
-    assertThat(page.locator("form h4")).hasText("Stage a relationship");
+    assertThat(page.locator("form h3")).hasText("Stage a relationship");
     clickButton(page, "Stage change");
     assertThat(page.locator("p.status")).containsText("Pending changes saved.");
 
@@ -276,8 +313,8 @@ class PackagedApplicationIT {
   }
 
   private static void stage(Page page, String source, String kind, String... targetNames) {
-    page.getByLabel("Source feature").selectOption(new SelectOption().setLabel(source));
-    page.getByLabel("Relationship type").selectOption(new SelectOption().setLabel(kind));
+    choose(page, "Source feature", source);
+    choose(page, "Relationship type", kind);
 
     for (var target : targetNames) {
       targets(page).getByLabel(target).check();
@@ -285,6 +322,110 @@ class PackagedApplicationIT {
 
     clickButton(page, "Stage change");
     assertThat(page.locator("p.status")).containsText("Pending changes saved.");
+  }
+
+  /** Browses with reduced motion, so colors settle before the accessibility scans measure them. */
+  private static BrowserContext newContext(Browser browser) {
+    return browser.newContext(
+        new Browser.NewContextOptions().setReducedMotion(ReducedMotion.REDUCE));
+  }
+
+  /** Picks an option from a PrimeNG select the way a visitor does: open it, then click. */
+  private static void choose(Page page, String select, String option) {
+    page.getByRole(AriaRole.COMBOBOX, new Page.GetByRoleOptions().setName(select)).click();
+    page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName(option).setExact(true))
+        .click();
+  }
+
+  /**
+   * Requires zero WCAG 2.2 A and AA violations in the light and the dark theme, and no sideways
+   * scrolling at phone and desktop widths. The theme ends where it started.
+   */
+  private static void assertAccessible(Page page, String where) {
+    for (int round = 0; round < 2; round++) {
+      var theme = "true".equals(themeToggle(page).getAttribute("aria-pressed")) ? "dark" : "light";
+      var results = new AxeBuilder(page).withTags(WCAG_TAGS).analyze();
+
+      assertTrue(
+          results.violationFree(), where + ", " + theme + ": " + describe(results.getViolations()));
+      toggleTheme(page);
+    }
+
+    var original = page.viewportSize();
+    for (var width : List.of(320, 1280)) {
+      page.setViewportSize(width, 800);
+      var scrollsSideways =
+          (Boolean)
+              page.evaluate(
+                  "document.documentElement.scrollWidth > document.documentElement.clientWidth");
+
+      assertFalse(
+          scrollsSideways,
+          where
+              + " scrolls sideways at "
+              + width
+              + "px, past the edge: "
+              + page.evaluate(OVERFLOW));
+    }
+    page.setViewportSize(original.width, original.height);
+  }
+
+  private static String describe(List<Rule> violations) {
+    return violations.stream()
+        .map(
+            rule ->
+                rule.getId()
+                    + " ("
+                    + rule.getImpact()
+                    + ") at "
+                    + rule.getNodes().stream()
+                        .map(node -> node.getTarget() + " " + node.getFailureSummary())
+                        .collect(Collectors.joining(", ")))
+        .collect(Collectors.joining("; "));
+  }
+
+  /** Text is set in IBM Plex Sans, served with the app. */
+  private static void checkTypography(Page page) {
+    assertTrue(
+        ((String) page.evaluate("getComputedStyle(document.body).fontFamily"))
+            .startsWith("\"IBM Plex Sans Variable\""));
+    assertTrue(
+        (Boolean)
+            page.evaluate(
+                "document.fonts.ready.then(() => document.fonts.check('14px \"IBM Plex Sans Variable\"'))"),
+        "the IBM Plex Sans font file loads");
+  }
+
+  /**
+   * The skip link is the first stop and moves focus to the main content; the theme toggle works
+   * from the keyboard and reports its state.
+   */
+  private static void checkKeyboardBasics(Page page) {
+    page.keyboard().press("Tab");
+    assertEquals(
+        "Skip to main content", page.evaluate("document.activeElement.textContent.trim()"));
+    page.keyboard().press("Enter");
+    assertEquals("main", page.evaluate("document.activeElement.id"));
+    assertTrue(page.url().endsWith("/"), "the skip link stays on the page");
+
+    var toggle = themeToggle(page);
+    var before = toggle.getAttribute("aria-pressed");
+    toggle.focus();
+    page.keyboard().press("Space");
+    assertThat(toggle).not().hasAttribute("aria-pressed", before);
+    page.keyboard().press("Enter");
+    assertThat(toggle).hasAttribute("aria-pressed", before);
+  }
+
+  private static Locator themeToggle(Page page) {
+    return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Dark theme"));
+  }
+
+  private static void toggleTheme(Page page) {
+    var toggle = themeToggle(page);
+    var before = toggle.getAttribute("aria-pressed");
+    toggle.click();
+    assertThat(toggle).not().hasAttribute("aria-pressed", before);
   }
 
   private static Locator targets(Page page) {

@@ -8,8 +8,8 @@ import { CatalogViewer } from './catalog-viewer';
   selector: 'app-showcase-page',
   template: `
     <section aria-labelledby="showcase-heading">
-      <h2 id="showcase-heading">Public catalog examples</h2>
-      <p role="status">
+      <h1 id="showcase-heading" class="text-xl font-semibold">Public catalog examples</h1>
+      <p role="status" class="help mt-1">
         @switch (loaded()) {
           @case (true) {
             These examples are read-only. Start a guest workspace to make your own changes.
@@ -22,9 +22,11 @@ import { CatalogViewer } from './catalog-viewer';
           }
         }
       </p>
-      @for (catalog of catalogs(); track catalog.id) {
-        <app-catalog-viewer [catalogId]="catalog.id" />
-      }
+      <div class="mt-6 grid gap-4">
+        @for (catalog of catalogs(); track catalog.id) {
+          <app-catalog-viewer [catalogId]="catalog.id" />
+        }
+      </div>
     </section>
   `,
 })
