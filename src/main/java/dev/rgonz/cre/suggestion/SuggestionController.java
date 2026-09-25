@@ -9,10 +9,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Proposes a relationship from plain English for the owner of a guest catalog to review. */
 @RestController
+@RequestMapping("/api")
 class SuggestionController {
   private final SuggestionService suggestions;
 
@@ -20,7 +22,7 @@ class SuggestionController {
     this.suggestions = suggestions;
   }
 
-  @PostMapping("/api/catalogs/{id}/suggestions")
+  @PostMapping("/catalogs/{id}/suggestions")
   SuggestionView suggest(
       @PathVariable UUID id,
       @RequestBody SuggestionRequest request,
@@ -29,7 +31,7 @@ class SuggestionController {
   }
 
   /** Lets the page label the assistant before the visitor asks anything. */
-  @GetMapping("/api/suggestions/mode")
+  @GetMapping("/suggestions/mode")
   ModeView mode() {
     return new ModeView(suggestions.mode());
   }
