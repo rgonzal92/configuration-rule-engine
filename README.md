@@ -81,6 +81,31 @@ PostgreSQL has a named data volume and no published host port.
 For an isolated smoke test, set a unique `COMPOSE_PROJECT_NAME`;
 existing volumes are not deleted.
 
+## Public deployment
+
+The public site runs on one home machine. Requests travel from the browser over HTTPS to
+Cloudflare, through an existing Cloudflare Tunnel and its reverse proxy, to this project's Caddy
+service `cre-proxy`, then to the app. The tunnel and its proxy are set up outside this project, so
+no router port is opened here. PostgreSQL sits on an internal network that only the app can reach,
+and only `cre-proxy` joins the proxy's network.
+
+Point the public hostname at `http://cre-proxy:8080` in that reverse proxy. Then add these lines
+to `.env`, naming the proxy's Docker network, and start the stack as above:
+
+```sh
+COMPOSE_PROFILES=public
+CRE_INGRESS_NETWORK=...
+```
+
+`cre-proxy` answers `413` to any request body over 64 KiB, and it drops `Forwarded`,
+`X-Forwarded-*`, and `CF-Connecting-IP` before the app sees the request; the app trusts no
+forwarded headers anyway. For checks on the machine itself, it also answers on loopback port 8081
+(`CRE_PROXY_PORT`). Every service restarts after a reboot once Docker starts.
+
+The site is only as available as that machine and the tunnel and reverse proxy it shares. A power
+cut, an internet outage, a reboot, or an update takes it offline, and there is no uptime guarantee. Guest workspaces last four hours at
+most in any case.
+
 ## Development checks
 
 Write a failing test for each behavior change, then implement it and rerun the test.
